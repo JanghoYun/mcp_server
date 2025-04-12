@@ -2,6 +2,12 @@ import { defineHandler } from "@smithery/mcp";
 import fs from "fs/promises";
 import path from "path";
 
+export default {
+  async run(ctx: any) {
+    return { message: "Hello from my MCP server!" };
+  }
+};
+
 export default defineHandler({
   async run(ctx) {
     const basePath = "C:/Users/kkom/Desktop/mcp_server";
