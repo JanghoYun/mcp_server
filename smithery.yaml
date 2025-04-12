@@ -1,6 +1,8 @@
 entrypoint: node
 command: node
-args: ["entrypoint.js"]
+args:
+  - entrypoint.js
+
 permissions:
   fs:
-    - "/data"
+    - /data
