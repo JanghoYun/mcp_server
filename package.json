@@ -2,6 +2,6 @@
   "name": "my-fs-mcp-server",
   "version": "1.0.0",
   "type": "module",
-  "main": "src/index.js",
+  "main": "entrypoint.js", 
   "dependencies": {}
 }
