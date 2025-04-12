@@ -1,6 +1,9 @@
 import http from 'http';
 import handler from './src/index.js';
 
+const basePath = process.env.BASE_PATH || "/data";
+console.log(`📂 File base path: ${basePath}`);
+
 const server = http.createServer(async (req, res) => {
   if (req.method !== 'POST') {
     res.writeHead(405);
@@ -15,15 +18,16 @@ const server = http.createServer(async (req, res) => {
       let result;
 
       if (method === 'tools/list') {
-        result = Object.entries(handler.tools).map(([name, def]) => ({
+        result = Object.entries(handler.tools(basePath)).map(([name, def]) => ({
           name,
           description: def.description,
           parameters: def.parameters
         }));
       } else if (method === 'tools/call') {
         const { name, arguments: args } = params;
-        if (!handler.tools[name]) throw new Error(`Unknown tool: ${name}`);
-        result = await handler.tools[name].run(args);
+        const tools = handler.tools(basePath);
+        if (!tools[name]) throw new Error(`Unknown tool: ${name}`);
+        result = await tools[name].run(args);
       } else if (method === 'initialize') {
         result = { status: "ok" };
       } else {
@@ -43,5 +47,3 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 MCP server ready at http://0.0.0.0:${PORT}`);
 });
-
-
