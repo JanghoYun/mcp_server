@@ -1,22 +1,37 @@
-import { defineHandler } from "@smithery/mcp";
-import fs from "fs/promises";
-import path from "path";
-
 export default {
-  async run(ctx: any) {
-    return { message: "Hello from my MCP server!" };
+  async run(ctx) {
+    const fs = await import('fs/promises');
+    const path = await import('path');
+
+    const basePath = "C:/Users/kkom/Desktop/mcp_server";
+    const action = ctx.input?.action;
+    const target = ctx.input?.target || "";
+    const content = ctx.input?.content || "";
+    const fullPath = path.join(basePath, target);
+
+    if (action === "list") {
+      const files = await fs.readdir(basePath);
+      return { files };
+    }
+
+    if (action === "read") {
+      const data = await fs.readFile(fullPath, "utf-8");
+      return { content: data };
+    }
+
+    if (action === "write") {
+      await fs.writeFile(fullPath, content, "utf-8");
+      return { message: "File written successfully." };
+    }
+
+    if (action === "delete") {
+      await fs.unlink(fullPath);
+      return { message: "File deleted." };
+    }
+
+    return {
+      error: "Invalid action. Use one of: list, read, write, delete",
+      received: { action, target }
+    };
   }
 };
-
-export default defineHandler({
-  async run(ctx) {
-    const basePath = "C:/Users/kkom/Desktop/mcp_server";
-
-    // 요청 파라미터에서 subPath 받기 (선택사항)
-    const subPath = ctx.input?.subPath || "";
-    const targetPath = path.join(basePath, subPath);
-
-    const files = await fs.readdir(targetPath);
-    return { files };
-  }
-});
