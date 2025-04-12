@@ -1,0 +1,9 @@
+{
+  "name": "mcp-server",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "src/index.ts",
+  "dependencies": {
+    "@smithery/mcp": "^0.1.0"
+  }
+}
