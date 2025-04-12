@@ -1,19 +1,30 @@
 import handler from "./src/index.js";
 
-const readline = require("readline");
+const decoder = new TextDecoder();
+const encoder = new TextEncoder();
 
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout,
-  terminal: false
-});
+const inputChunks = [];
+let buffer = "";
 
-rl.on("line", async (line) => {
-  try {
-    const input = JSON.parse(line);
-    const result = await handler.run({ input });
-    process.stdout.write(JSON.stringify(result) + "\n");
-  } catch (err) {
-    process.stdout.write(JSON.stringify({ error: err.message }) + "\n");
+process.stdin.on("data", (chunk) => {
+  buffer += chunk.toString();
+  let newlineIndex;
+  while ((newlineIndex = buffer.indexOf("\n")) >= 0) {
+    const line = buffer.slice(0, newlineIndex);
+    buffer = buffer.slice(newlineIndex + 1);
+
+    try {
+      const input = JSON.parse(line);
+      handler
+        .run({ input })
+        .then((result) => {
+          process.stdout.write(JSON.stringify(result) + "\n");
+        })
+        .catch((err) => {
+          process.stdout.write(JSON.stringify({ error: err.message }) + "\n");
+        });
+    } catch (err) {
+      process.stdout.write(JSON.stringify({ error: err.message }) + "\n");
+    }
   }
 });
