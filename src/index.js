@@ -1,37 +1,51 @@
-export default {
-  async run(ctx) {
-    const fs = await import('fs/promises');
-    const path = await import('path');
+import fs from 'fs/promises';
+import path from 'path';
 
-    const basePath = "C:/Users/kkom/Desktop/mcp_server";
-    const action = ctx.input?.action;
-    const target = ctx.input?.target || "";
-    const content = ctx.input?.content || "";
-    const fullPath = path.join(basePath, target);
+const basePath = "C:/Users/kkom/Desktop/mcp_server";
 
-    if (action === "list") {
+export const tools = {
+  listFiles: {
+    description: "List all files in the base directory.",
+    parameters: {},
+    run: async () => {
       const files = await fs.readdir(basePath);
       return { files };
     }
-
-    if (action === "read") {
-      const data = await fs.readFile(fullPath, "utf-8");
-      return { content: data };
+  },
+  readFile: {
+    description: "Read a file's content.",
+    parameters: {
+      filename: "string"
+    },
+    run: async ({ filename }) => {
+      const fullPath = path.join(basePath, filename);
+      const content = await fs.readFile(fullPath, 'utf-8');
+      return { content };
     }
-
-    if (action === "write") {
-      await fs.writeFile(fullPath, content, "utf-8");
+  },
+  writeFile: {
+    description: "Write content to a file.",
+    parameters: {
+      filename: "string",
+      content: "string"
+    },
+    run: async ({ filename, content }) => {
+      const fullPath = path.join(basePath, filename);
+      await fs.writeFile(fullPath, content, 'utf-8');
       return { message: "File written successfully." };
     }
-
-    if (action === "delete") {
+  },
+  deleteFile: {
+    description: "Delete a file.",
+    parameters: {
+      filename: "string"
+    },
+    run: async ({ filename }) => {
+      const fullPath = path.join(basePath, filename);
       await fs.unlink(fullPath);
       return { message: "File deleted." };
     }
-
-    return {
-      error: "Invalid action. Use one of: list, read, write, delete",
-      received: { action, target }
-    };
   }
 };
+
+export default { tools };

@@ -2,27 +2,44 @@ import http from 'http';
 import handler from './src/index.js';
 
 const server = http.createServer(async (req, res) => {
-  if (req.method === 'POST' && req.url === '/') {
-    let body = '';
-    req.on('data', chunk => (body += chunk));
-    req.on('end', async () => {
-      try {
-        const input = JSON.parse(body);
-        const result = await handler.run({ input });
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify(result));
-      } catch (err) {
-        res.writeHead(500, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: err.message }));
-      }
-    });
-  } else {
-    res.writeHead(404);
-    res.end();
+  if (req.method !== 'POST') {
+    res.writeHead(405);
+    return res.end();
   }
+
+  let body = '';
+  req.on('data', chunk => (body += chunk));
+  req.on('end', async () => {
+    try {
+      const { method, params, id } = JSON.parse(body);
+      let result;
+
+      if (method === 'tools/list') {
+        result = Object.entries(handler.tools).map(([name, def]) => ({
+          name,
+          description: def.description,
+          parameters: def.parameters
+        }));
+      } else if (method === 'tools/call') {
+        const { name, arguments: args } = params;
+        if (!handler.tools[name]) throw new Error(`Unknown tool: ${name}`);
+        result = await handler.tools[name].run(args);
+      } else if (method === 'initialize') {
+        result = { status: "ok" };
+      } else {
+        throw new Error(`Unknown method: ${method}`);
+      }
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ jsonrpc: '2.0', result, id }));
+    } catch (err) {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ jsonrpc: '2.0', error: { message: err.message }, id: null }));
+    }
+  });
 });
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-  console.log(`🟢 MCP server listening on port ${PORT}`);
+  console.log(`🚀 MCP server ready at http://localhost:${PORT}`);
 });
