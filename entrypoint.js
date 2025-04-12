@@ -1,30 +1,28 @@
-import handler from "./src/index.js";
+import http from 'http';
+import handler from './src/index.js';
 
-const decoder = new TextDecoder();
-const encoder = new TextEncoder();
-
-const inputChunks = [];
-let buffer = "";
-
-process.stdin.on("data", (chunk) => {
-  buffer += chunk.toString();
-  let newlineIndex;
-  while ((newlineIndex = buffer.indexOf("\n")) >= 0) {
-    const line = buffer.slice(0, newlineIndex);
-    buffer = buffer.slice(newlineIndex + 1);
-
-    try {
-      const input = JSON.parse(line);
-      handler
-        .run({ input })
-        .then((result) => {
-          process.stdout.write(JSON.stringify(result) + "\n");
-        })
-        .catch((err) => {
-          process.stdout.write(JSON.stringify({ error: err.message }) + "\n");
-        });
-    } catch (err) {
-      process.stdout.write(JSON.stringify({ error: err.message }) + "\n");
-    }
+const server = http.createServer(async (req, res) => {
+  if (req.method === 'POST' && req.url === '/') {
+    let body = '';
+    req.on('data', chunk => (body += chunk));
+    req.on('end', async () => {
+      try {
+        const input = JSON.parse(body);
+        const result = await handler.run({ input });
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(result));
+      } catch (err) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: err.message }));
+      }
+    });
+  } else {
+    res.writeHead(404);
+    res.end();
   }
+});
+
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+  console.log(`🟢 MCP server listening on port ${PORT}`);
 });
